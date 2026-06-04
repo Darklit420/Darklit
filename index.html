@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en" data-color="plum" data-theme="light">
+<script>
+(function(){
+  var root = document.documentElement;
+  var saved = localStorage.getItem('df-theme');
+  if (saved) { root.setAttribute('data-theme', saved); return; }
+  try {
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    var hour = parseInt(new Date().toLocaleString('en-US', { hour:'numeric', hour12:false, timeZone:tz }));
+    root.setAttribute('data-theme', (hour >= 19 || hour < 6) ? 'dark' : 'light');
+  } catch(e) {
+    root.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+})();
+</script>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Darklit — Smart Dark Mode Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ── PALETTE SYSTEM — all 9 × 2 ── */
+[data-color="plum"][data-theme="light"] {
+  --accent:#5a2080; --accent-mid:#b06aee; --accent-light:#eeddf8; --accent-text:#360e50; --gold:#b8c820;
+  --bg:#e0d4ec; --bg2:#d6c8e4; --bg3:#cabcd8; --surface:#ede6f6;
+  --ink:#1a0828; --ink2:#301448; --muted:#7058a0; --muted2:#a090c0;
+  --border:rgba(26,8,40,0.12); --border2:rgba(26,8,40,0.22);
+  --announce-bg:#1a0828; --announce-fg:#e0d4ec; --nav-bg:#ede6f6;
+  --shadow:0 2px 20px rgba(26,8,40,0.1); --shadow-lg:0 8px 40px rgba(26,8,40,0.18);
+}
+[data-color="plum"][data-theme="dark"] {
+  --accent:#a560d8; --accent-mid:#b56ae6; --accent-light:#180828; --accent-text:#d090f8; --gold:#c8d820;
+  --bg:#1a0c2e; --bg2:#221038; --bg3:#2a1840; --surface:#1e0e34;
+  --ink:#f2dbe9; --ink2:#b098d0; --muted:#7050a0; --muted2:#402858;
+  --border:rgba(232,216,248,0.08); --border2:rgba(232,216,248,0.16);
+  --announce-bg:#0c0418; --announce-fg:#f2dbe9; --nav-bg:#140a22;
+  --shadow:0 2px 20px rgba(0,0,0,0.45); --shadow-lg:0 8px 40px rgba(0,0,0,0.55);
+}
+[data-color="rose"][data-theme="light"] {
+  --accent:#b04060; --accent-mid:#e87898; --accent-light:#fde0e8; --accent-text:#6a1830; --gold:#2a6e40;
+  --bg:#eedadf; --bg2:#e4ced4; --bg3:#d8c0c6; --surface:#f8eef2;
+  --ink:#22080e; --ink2:#40141e; --muted:#906070; --muted2:#b89098;
+  --border:rgba(34,8,14,0.12); --border2:rgba(34,8,14,0.22);
+  --announce-bg:#22080e; --announce-fg:#eedadf; --nav-bg:#f8eef2;
+  --shadow:0 2px 20px rgba(34,8,14,0.1); --shadow-lg:0 8px 40px rgba(34,8,14,0.18);
+}
+[data-color="rose"][data-theme="dark"] {
+  --accent:#d65870; --accent-mid:#ee7890; --accent-light:#280818; --accent-text:#f0a0b8; --gold:#2a7e48;
+  --bg:#321428; --bg2:#3c1c32; --bg3:#46203c; --surface:#380e22;
+  --ink:#f8ded8; --ink2:#c098a8; --muted:#906070; --muted2:#583840;
+  --border:rgba(240,220,228,0.08); --border2:rgba(240,220,228,0.16);
+  --announce-bg:#140408; --announce-fg:#f8ded8; --nav-bg:#1e0c14;
+  --shadow:0 2px 20px rgba(0,0,0,0.45); --shadow-lg:0 8px 40px rgba(0,0,0,0.55);
+}
+[data-color="sage"][data-theme="light"] {
+  --accent:#1d6e4e; --accent-mid:#2d9b6f; --accent-light:#d8f0e4; --accent-text:#0f4a32; --gold:#c8a84b;
+  --bg:#e8e3d9; --bg2:#dfd8cc; --bg3:#d3cbbe; --surface:#f0ece3;
+  --ink:#0d1a11; --ink2:#253b2c; --muted:#5e7566; --muted2:#8fa396;
+  --border:rgba(13,26,17,0.11); --border2:rgba(13,26,17,0.2);
+  --announce-bg:#0d1a11; --announce-fg:#e8e3d9; --nav-bg:#f0ece3;
+  --shadow:0 2px 20px rgba(13,26,17,0.08); --shadow-lg:0 8px 40px rgba(13,26,17,0.14);
+}
+[data-color="sage"][data-theme="dark"] {
+  --accent:#41bb7a; --accent-mid:#56cc8c; --accent-light:#0a2318; --accent-text:#7de0b0; --gold:#d4b05a;
+  --bg:#0e1610; --bg2:#141e16; --bg3:#1a261c; --surface:#182018;
+  --ink:#e3f0d9; --ink2:#a8c8b0; --muted:#6a8f72; --muted2:#445e4a;
+  --border:rgba(221,238,227,0.08); --border2:rgba(221,238,227,0.15);
+  --announce-bg:#080e09; --announce-fg:#e3f0d9; --nav-bg:#121a13;
+  --shadow:0 2px 20px rgba(0,0,0,0.35); --shadow-lg:0 8px 40px rgba(0,0,0,0.45);
+}
+[data-color="midnight"][data-theme="light"] {
+  --accent:#1a4fa8; --accent-mid:#3a72d4; --accent-light:#dce8f8; --accent-text:#0e2d60; --gold:#c49a1a;
+  --bg:#e8edf5; --bg2:#dce4f0; --bg3:#cfd8ea; --surface:#f0f4fb;
+  --ink:#0a1628; --ink2:#1a2e50; --muted:#4a6080; --muted2:#8090b0;
+  --border:rgba(10,22,40,0.11); --border2:rgba(10,22,40,0.2);
+  --announce-bg:#0a1628; --announce-fg:#e8edf5; --nav-bg:#f0f4fb;
+  --shadow:0 2px 20px rgba(10,22,40,0.09); --shadow-lg:0 8px 40px rgba(10,22,40,0.16);
+}
+[data-color="midnight"][data-theme="dark"] {
+  --accent:#4a8ee8; --accent-mid:#6aaaf4; --accent-light:#081428; --accent-text:#90c4ff; --gold:#e8b830;
+  --bg:#080e1a; --bg2:#0e1628; --bg3:#141e34; --surface:#0c1422;
+  --ink:#d8e8f8; --ink2:#90a8cc; --muted:#4a6088; --muted2:#243050;
+  --border:rgba(200,220,248,0.08); --border2:rgba(200,220,248,0.15);
+  --announce-bg:#040810; --announce-fg:#d8e8f8; --nav-bg:#080c18;
+  --shadow:0 2px 20px rgba(0,0,0,0.45); --shadow-lg:0 8px 40px rgba(0,0,0,0.58);
+}
+[data-color="ember"][data-theme="light"] {
+  --accent:#8c3a1a; --accent-mid:#c05a30; --accent-light:#f5e0d5; --accent-text:#5a1a08; --gold:#c8a060;
+  --bg:#ede0d4; --bg2:#e4d4c4; --bg3:#d8c6b4; --surface:#f5ece4;
+  --ink:#1a0c06; --ink2:#30180a; --muted:#806050; --muted2:#a88878;
+  --border:rgba(26,12,6,0.12); --border2:rgba(26,12,6,0.22);
+  --announce-bg:#1a0c06; --announce-fg:#ede0d4; --nav-bg:#f5ece4;
+  --shadow:0 2px 20px rgba(26,12,6,0.1); --shadow-lg:0 8px 40px rgba(26,12,6,0.18);
+}
+[data-color="ember"][data-theme="dark"] {
+  --accent:#d4602a; --accent-mid:#e87848; --accent-light:#280e04; --accent-text:#f0a080; --gold:#d4aa60;
+  --bg:#1a0e08; --bg2:#221408; --bg3:#2a1c10; --surface:#1e1208;
+  --ink:#f5e8d8; --ink2:#c0a080; --muted:#806050; --muted2:#503828;
+  --border:rgba(240,220,200,0.08); --border2:rgba(240,220,200,0.15);
+  --announce-bg:#0e0804; --announce-fg:#f5e8d8; --nav-bg:#140c06;
+  --shadow:0 2px 20px rgba(0,0,0,0.45); --shadow-lg:0 8px 40px rgba(0,0,0,0.55);
+}
+[data-color="slate"][data-theme="light"] {
+  --accent:#2a5c6e; --accent-mid:#3a8099; --accent-light:#d4eaf0; --accent-text:#163848; --gold:#8aaa60;
+  --bg:#dce6e8; --bg2:#d0dce0; --bg3:#c4d0d4; --surface:#e8f0f2;
+  --ink:#0a1820; --ink2:#1a2e38; --muted:#506878; --muted2:#8098a8;
+  --border:rgba(10,24,32,0.11); --border2:rgba(10,24,32,0.2);
+  --announce-bg:#0a1820; --announce-fg:#dce6e8; --nav-bg:#e8f0f2;
+  --shadow:0 2px 20px rgba(10,24,32,0.09); --shadow-lg:0 8px 40px rgba(10,24,32,0.16);
+}
+[data-color="slate"][data-theme="dark"] {
+  --accent:#4a9ab8; --accent-mid:#60b4d4; --accent-light:#081820; --accent-text:#88ccee; --gold:#a0c878;
+  --bg:#080e12; --bg2:#0e161c; --bg3:#141e26; --surface:#0c1418;
+  --ink:#d4e8f0; --ink2:#88a8c0; --muted:#406078; --muted2:#1e3848;
+  --border:rgba(200,228,240,0.08); --border2:rgba(200,228,240,0.15);
+  --announce-bg:#040a0e; --announce-fg:#d4e8f0; --nav-bg:#080c12;
+  --shadow:0 2px 20px rgba(0,0,0,0.45); --shadow-lg:0 8px 40px rgba(0,0,0,0.55);
+}
+[data-color="obsidian"][data-theme="light"] {
+  --accent:#2a2a2a; --accent-mid:#555555; --accent-light:#e8e4dc; --accent-text:#111111; --gold:#c8a830;
+  --bg:#e4e0d8; --bg2:#d8d4cc; --bg3:#ccc8c0; --surface:#eeecea;
+  --ink:#100e0c; --ink2:#28241e; --muted:#706860; --muted2:#a09890;
+  --border:rgba(16,14,12,0.12); --border2:rgba(16,14,12,0.22);
+  --announce-bg:#100e0c; --announce-fg:#e4e0d8; --nav-bg:#eeecea;
+  --shadow:0 2px 20px rgba(16,14,12,0.1); --shadow-lg:0 8px 40px rgba(16,14,12,0.18);
+}
+[data-color="obsidian"][data-theme="dark"] {
+  --accent:#c8a830; --accent-mid:#dcc048; --accent-light:#1a1608; --accent-text:#f0d870; --gold:#c8a830;
+  --bg:#0c0c0a; --bg2:#121210; --bg3:#181814; --surface:#101010;
+  --ink:#f0ece4; --ink2:#c0b8a8; --muted:#706850; --muted2:#403820;
+  --border:rgba(240,236,228,0.08); --border2:rgba(240,236,228,0.15);
+  --announce-bg:#060604; --announce-fg:#f0ece4; --nav-bg:#0a0a08;
+  --shadow:0 2px 20px rgba(0,0,0,0.6); --shadow-lg:0 8px 40px rgba(0,0,0,0.7);
+}
+[data-color="copper"][data-theme="light"] {
+  --accent:#8c4a28; --accent-mid:#c07048; --accent-light:#f5e4d4; --accent-text:#5a2a10; --gold:#b89060;
+  --bg:#f0e8dc; --bg2:#e8ddd0; --bg3:#ddd0c0; --surface:#f8f2ea;
+  --ink:#1e1008; --ink2:#341e10; --muted:#806048; --muted2:#a89080;
+  --border:rgba(30,16,8,0.11); --border2:rgba(30,16,8,0.2);
+  --announce-bg:#1e1008; --announce-fg:#f0e8dc; --nav-bg:#f8f2ea;
+  --shadow:0 2px 20px rgba(30,16,8,0.09); --shadow-lg:0 8px 40px rgba(30,16,8,0.16);
+}
+[data-color="copper"][data-theme="dark"] {
+  --accent:#c87840; --accent-mid:#e09058; --accent-light:#200e04; --accent-text:#f0b880; --gold:#c89050;
+  --bg:#140c06; --bg2:#1c1208; --bg3:#24180c; --surface:#180e08;
+  --ink:#f5ead8; --ink2:#c0a080; --muted:#806848; --muted2:#503820;
+  --border:rgba(240,224,200,0.08); --border2:rgba(240,224,200,0.15);
+  --announce-bg:#0a0602; --announce-fg:#f5ead8; --nav-bg:#100a04;
+  --shadow:0 2px 20px rgba(0,0,0,0.45); --shadow-lg:0 8px 40px rgba(0,0,0,0.55);
+}
+[data-color="iris"][data-theme="light"] {
+  --accent:#3a28a0; --accent-mid:#6858d0; --accent-light:#e4dff8; --accent-text:#1e1060; --gold:#d4a820;
+  --bg:#ddd8f0; --bg2:#d2cce8; --bg3:#c6c0dc; --surface:#eae8f8;
+  --ink:#100820; --ink2:#201440; --muted:#605888; --muted2:#9890b8;
+  --border:rgba(16,8,32,0.12); --border2:rgba(16,8,32,0.22);
+  --announce-bg:#100820; --announce-fg:#ddd8f0; --nav-bg:#eae8f8;
+  --shadow:0 2px 20px rgba(16,8,32,0.1); --shadow-lg:0 8px 40px rgba(16,8,32,0.18);
+}
+[data-color="iris"][data-theme="dark"] {
+  --accent:#8878e8; --accent-mid:#a090f8; --accent-light:#100820; --accent-text:#c0b8ff; --gold:#e8c030;
+  --bg:#0c0818; --bg2:#140e24; --bg3:#1c1430; --surface:#100c20;
+  --ink:#e8e0f8; --ink2:#a898d0; --muted:#605888; --muted2:#38284e;
+  --border:rgba(228,220,248,0.08); --border2:rgba(228,220,248,0.16);
+  --announce-bg:#080412; --announce-fg:#e8e0f8; --nav-bg:#0a0618;
+  --shadow:0 2px 20px rgba(0,0,0,0.5); --shadow-lg:0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  transition: background 0.4s ease, color 0.4s ease;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--announce-bg);
+  color: var(--announce-fg);
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+.topbar em { color: var(--accent-mid); font-style: normal; font-weight: 600; }
+
+/* ── NAV ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0 5vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  box-shadow: var(--shadow);
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  transition: color 0.4s ease;
+}
+.nav-logo span { color: var(--accent); transition: color 0.4s ease; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.theme-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 50px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.02em;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.theme-icon { font-size: 14px; transition: transform 0.4s ease; }
+.btn-buy {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 9px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.01em;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-buy:hover { background: var(--accent-mid); transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  padding: 80px 5vw;
+  position: relative;
+  overflow: hidden;
+}
+.hero-bg-orb {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.06;
+  top: -200px;
+  right: -200px;
+  pointer-events: none;
+  transition: background 0.4s ease;
+  filter: blur(80px);
+}
+.hero-bg-orb2 {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: var(--gold);
+  opacity: 0.05;
+  bottom: -100px;
+  left: -100px;
+  pointer-events: none;
+  transition: background 0.4s ease;
+  filter: blur(60px);
+}
+.hero-content { position: relative; z-index: 1; max-width: 680px; }
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 24px;
+  background: var(--accent-light);
+  padding: 6px 14px;
+  border-radius: 50px;
+  transition: all 0.4s ease;
+}
+.hero-h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(42px, 6vw, 80px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 24px;
+  transition: color 0.4s ease;
+}
+.hero-h1 em {
+  font-style: italic;
+  color: var(--gold);
+  transition: color 0.4s ease;
+}
+.hero-sub {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 520px;
+  font-weight: 300;
+  margin-bottom: 40px;
+  transition: color 0.4s ease;
+}
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: var(--accent-mid); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.btn-ghost {
+  background: transparent;
+  color: var(--ink2);
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1.5px solid var(--border2);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.hero-proof {
+  margin-top: 48px;
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.proof-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.proof-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--accent);
+  transition: color 0.4s ease;
+}
+.proof-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── PALETTE SWITCHER ── */
+.palette-section {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 5vw;
+  transition: background 0.4s ease, border-color 0.4s ease;
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+}
+.palette-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+  transition: color 0.4s ease;
+}
+.palette-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.palette-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 50px;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink2);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.palette-pill:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+.palette-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.palette-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── STOREFRONT PREVIEW ── */
+.preview-section { padding: 80px 5vw; }
+.section-header { margin-bottom: 56px; }
+.sec-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.4s ease;
+}
+.sec-eyebrow::before { content:''; width:20px; height:1px; background:var(--accent); transition: background 0.4s ease; }
+.sec-h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 12px;
+  transition: color 0.4s ease;
+}
+.sec-h2 em { font-style: italic; color: var(--gold); transition: color 0.4s ease; }
+.sec-sub {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.65;
+  max-width: 520px;
+  font-weight: 300;
+  transition: color 0.4s ease;
+}
+
+/* Format tabs */
+.format-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg2);
+  border-radius: 12px;
+  padding: 4px;
+  width: fit-content;
+  margin-bottom: 40px;
+  transition: background 0.4s ease;
+}
+.format-tab {
+  padding: 9px 20px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.format-tab.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+/* Mock storefront */
+.mock-browser {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.4s ease;
+}
+.mock-browser-bar {
+  background: var(--bg3);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+.mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+.mock-dot.r { background: #ff5f57; }
+.mock-dot.y { background: #ffbd2e; }
+.mock-dot.g { background: #28c840; }
+.mock-url {
+  flex: 1;
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 8px;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* Mock storefront inner */
+.mock-store {
+  background: var(--bg);
+  transition: background 0.4s ease;
+}
+.mock-announce {
+  background: var(--announce-bg);
+  color: var(--announce-fg);
+  text-align: center;
+  padding: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+.mock-nav {
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+.mock-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  transition: color 0.4s ease;
+}
+.mock-logo span { color: var(--accent); transition: color 0.4s ease; }
+.mock-nav-links {
+  display: flex;
+  gap: 20px;
+}
+.mock-nav-links span {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  transition: color 0.4s ease;
+}
+.mock-cart-btn {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+.mock-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 200px;
+}
+.mock-hero-left {
+  background: var(--ink);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.4s ease;
+}
+.mock-eyebrow-tag {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-mid);
+  transition: color 0.4s ease;
+}
+.mock-h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f7f5f0;
+  line-height: 1.15;
+  transition: color 0.4s ease;
+}
+[data-theme="dark"] .mock-h1 { color: var(--ink); }
+.mock-h1 em { font-style: italic; color: var(--gold); transition: color 0.4s ease; }
+.mock-sub-text {
+  font-size: 11px;
+  color: rgba(247,245,240,0.5);
+  line-height: 1.5;
+  transition: color 0.4s ease;
+}
+[data-theme="dark"] .mock-sub-text { color: var(--muted); }
+.mock-btn-row { display: flex; gap: 8px; margin-top: 4px; }
+.mock-btn {
+  background: var(--accent);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 600;
+  transition: background 0.4s ease;
+}
+.mock-btn-outline {
+  background: transparent;
+  color: rgba(247,245,240,0.6);
+  padding: 7px 12px;
+  border-radius: 50px;
+  font-size: 10px;
+  border: 1px solid rgba(247,245,240,0.2);
+  transition: all 0.4s ease;
+}
+.mock-hero-right {
+  background: var(--bg2);
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  transition: background 0.4s ease;
+}
+.mock-product-card {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.4s ease;
+}
+.mock-ptag {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 2px 8px;
+  border-radius: 50px;
+  display: inline-block;
+  margin-bottom: 6px;
+  transition: all 0.4s ease;
+}
+.mock-pname {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+  transition: color 0.4s ease;
+}
+.mock-pmeta { display: flex; align-items: center; gap: 10px; }
+.mock-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: color 0.4s ease;
+}
+.mock-stars {
+  font-size: 9px;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 2px 7px;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.4s ease;
+}
+
+/* Products grid preview */
+.mock-products-section {
+  background: var(--bg);
+  padding: 24px;
+  transition: background 0.4s ease;
+}
+.mock-section-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+  transition: color 0.4s ease;
+}
+.mock-section-h {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 16px;
+  transition: color 0.4s ease;
+}
+.mock-section-h em { font-style: italic; color: var(--gold); transition: color 0.4s ease; }
+.mock-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.mock-card {
+  background: var(--surface);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: all 0.4s ease;
+}
+.mock-card-img {
+  height: 70px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  transition: background 0.4s ease;
+}
+.mock-card-body { padding: 10px; }
+.mock-card-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+  line-height: 1.3;
+  transition: color 0.4s ease;
+}
+.mock-card-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 500;
+  transition: color 0.4s ease;
+}
+.mock-add-btn {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--accent);
+  color: #fff;
+  padding: 5px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  transition: background 0.4s ease;
+}
+
+/* Mobile mock */
+.mock-mobile {
+  max-width: 360px;
+  margin: 0 auto;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow-lg);
+}
+.mock-mobile-bar {
+  background: var(--nav-bg);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+.mock-hamburger { font-size: 16px; color: var(--ink); cursor: pointer; transition: color 0.4s ease; }
+.mock-mobile-hero {
+  background: var(--ink);
+  padding: 28px 20px;
+  transition: background 0.4s ease;
+}
+[data-theme="dark"] .mock-mobile-hero { background: var(--bg2); }
+.mock-mobile-products { padding: 20px; background: var(--bg); transition: background 0.4s ease; }
+.mock-mobile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── FEATURE GRID ── */
+.features-section {
+  background: var(--bg2);
+  padding: 80px 5vw;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 56px;
+}
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.3s ease;
+}
+.feature-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--accent-light);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+  transition: background 0.4s ease;
+}
+.feature-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+  transition: color 0.4s ease;
+}
+.feature-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.65;
+  font-weight: 300;
+  transition: color 0.4s ease;
+}
+.feature-tag {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 4px 10px;
+  border-radius: 50px;
+  transition: all 0.4s ease;
+}
+
+/* ── WHAT'S INCLUDED ── */
+.included-section { padding: 80px 5vw; }
+.included-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  margin-top: 56px;
+}
+.included-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.included-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent);
+  transition: background 0.4s ease;
+}
+.included-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+  transition: color 0.4s ease;
+}
+.included-card-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  font-weight: 400;
+  transition: color 0.4s ease;
+}
+.included-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.included-list li {
+  font-size: 13px;
+  color: var(--ink2);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+  transition: color 0.4s ease;
+}
+.included-list li::before {
+  content: '✓';
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 11px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  transition: color 0.4s ease;
+}
+
+/* ── DETECTION EXPLAINER ── */
+.detection-section {
+  background: var(--bg2);
+  padding: 80px 5vw;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+.detection-code {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 28px 32px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--ink2);
+  margin-top: 40px;
+  overflow-x: auto;
+  transition: all 0.4s ease;
+}
+.code-comment { color: var(--muted); }
+.code-keyword { color: var(--accent); font-weight: 500; }
+.code-string { color: var(--gold); }
+.detection-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 40px;
+}
+.detection-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: all 0.4s ease;
+}
+.step-num {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: background 0.4s ease;
+  font-family: 'DM Mono', monospace;
+}
+.step-text { font-size: 13px; color: var(--ink2); line-height: 1.5; transition: color 0.4s ease; }
+.step-text strong { display: block; color: var(--ink); font-weight: 600; margin-bottom: 3px; transition: color 0.4s ease; }
+
+/* ── PRICING ── */
+.pricing-section { padding: 80px 5vw; text-align: center; }
+.price-card {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 24px;
+  padding: 56px 48px;
+  max-width: 520px;
+  margin: 56px auto 0;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.4s ease;
+}
+.price-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  padding: 5px 18px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background 0.4s ease;
+}
+.price-main {
+  font-family: 'DM Mono', monospace;
+  font-size: 72px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+  margin: 16px 0 8px;
+  transition: color 0.4s ease;
+}
+.price-main sup {
+  font-size: 28px;
+  vertical-align: super;
+  color: var(--accent);
+  transition: color 0.4s ease;
+}
+.price-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  transition: color 0.4s ease;
+}
+.price-list { list-style: none; text-align: left; display: flex; flex-direction: column; gap: 12px; margin-bottom: 36px; }
+.price-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--ink2);
+  transition: color 0.4s ease;
+}
+.price-list li::before {
+  content: '✓';
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: color 0.4s ease;
+}
+.btn-cta {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  padding: 16px 32px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.btn-cta:hover { background: var(--accent-mid); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.price-note { font-size: 12px; color: var(--muted2); margin-top: 14px; transition: color 0.4s ease; }
+
+/* ── FOOTER ── */
+.footer {
+  background: var(--announce-bg);
+  color: var(--announce-fg);
+  padding: 40px 5vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  transition: background 0.4s ease, color 0.4s ease;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.footer-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+.footer-logo span { color: var(--accent-mid); transition: color 0.4s ease; }
+.footer-copy { font-size: 12px; opacity: 0.5; }
+
+/* ── REVEAL ANIMATIONS ── */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .mock-nav-links { display: none; }
+  .mock-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-proof { gap: 20px; }
+  .price-card { padding: 40px 28px; }
+  .price-main { font-size: 56px; }
+  .mock-hero { grid-template-columns: 1fr; }
+  .mock-hero-right { display: none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  Switch palettes below — <em>9 themes, 2 modes, zero flash.</em>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">Dark<span>lit</span></div>
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span class="theme-icon" id="themeIcon">☀️</span>
+      <span id="themeLabel">Light mode</span>
+    </button>
+    <a href="#pricing" class="btn-buy">Get the Engine →</a>
+  </div>
+</nav>
+
+<!-- PALETTE SWITCHER (sticky) -->
+<div class="palette-section">
+  <div class="palette-label">↓ Try all 9 palettes — watch every element update instantly</div>
+  <div class="palette-pills">
+    <button class="palette-pill active" onclick="setPalette('plum', this)">
+      <span class="palette-dot" style="background:#5a2080"></span> Plum
+    </button>
+    <button class="palette-pill" onclick="setPalette('rose', this)">
+      <span class="palette-dot" style="background:#b04060"></span> Rose
+    </button>
+    <button class="palette-pill" onclick="setPalette('sage', this)">
+      <span class="palette-dot" style="background:#1d6e4e"></span> Sage
+    </button>
+    <button class="palette-pill" onclick="setPalette('midnight', this)">
+      <span class="palette-dot" style="background:#1a4fa8"></span> Midnight
+    </button>
+    <button class="palette-pill" onclick="setPalette('ember', this)">
+      <span class="palette-dot" style="background:#8c3a1a"></span> Ember
+    </button>
+    <button class="palette-pill" onclick="setPalette('slate', this)">
+      <span class="palette-dot" style="background:#2a5c6e"></span> Slate
+    </button>
+    <button class="palette-pill" onclick="setPalette('obsidian', this)">
+      <span class="palette-dot" style="background:#2a2a2a"></span> Obsidian
+    </button>
+    <button class="palette-pill" onclick="setPalette('copper', this)">
+      <span class="palette-dot" style="background:#8c4a28"></span> Copper
+    </button>
+    <button class="palette-pill" onclick="setPalette('iris', this)">
+      <span class="palette-dot" style="background:#3a28a0"></span> Iris
+    </button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-orb"></div>
+  <div class="hero-bg-orb2"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow reveal">⚡ Smart Dark Mode Engine</div>
+    <h1 class="hero-h1 reveal reveal-delay-1">
+      The theme system your<br>storefront <em>deserves.</em>
+    </h1>
+    <p class="hero-sub reveal reveal-delay-2">
+      9 palettes. 2 modes. Zero flash on load. Drop it in, pick a color, ship it. 
+      Built for mobile web, desktop web, and app WebView — one engine, three formats.
+    </p>
+    <div class="hero-ctas reveal reveal-delay-3">
+      <a href="#preview" class="btn-primary">See it live ↓</a>
+      <a href="#pricing" class="btn-ghost">Pricing →</a>
+    </div>
+    <div class="hero-proof reveal reveal-delay-4">
+      <div class="proof-item">
+        <span class="proof-num">9</span>
+        <span class="proof-label">Palettes</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">2</span>
+        <span class="proof-label">Modes</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">360</span>
+        <span class="proof-label">Design decisions made</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">3</span>
+        <span class="proof-label">Deploy formats</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">0</span>
+        <span class="proof-label">Flash on load</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STOREFRONT PREVIEW -->
+<section class="preview-section" id="preview">
+  <div class="section-header reveal">
+    <div class="sec-eyebrow">Live Preview</div>
+    <h2 class="sec-h2">A real storefront. <em>Right now.</em></h2>
+    <p class="sec-sub">Everything you see on this page is powered by the Darklit engine. Switch palettes above and watch the whole store repaint — instant, smooth, zero JavaScript re-coloring.</p>
+  </div>
+
+  <div class="format-tabs reveal">
+    <button class="format-tab active" onclick="showFormat('desktop', this)">🖥 Desktop</button>
+    <button class="format-tab" onclick="showFormat('mobile', this)">📱 Mobile</button>
+  </div>
+
+  <!-- Desktop mock -->
+  <div id="format-desktop" class="reveal">
+    <div class="mock-browser">
+      <div class="mock-browser-bar">
+        <span class="mock-dot r"></span>
+        <span class="mock-dot y"></span>
+        <span class="mock-dot g"></span>
+        <span class="mock-url">yourstore.com</span>
+      </div>
+      <div class="mock-store">
+        <div class="mock-announce">Free shipping on orders over $50 · Use code WELCOME10 for 10% off</div>
+        <div class="mock-nav">
+          <div class="mock-logo">Dark<span>lit</span></div>
+          <div class="mock-nav-links">
+            <span>Shop</span><span>Collections</span><span>About</span><span>Blog</span>
+          </div>
+          <div class="mock-cart-btn">🛒 Cart (0)</div>
+        </div>
+        <div class="mock-hero">
+          <div class="mock-hero-left">
+            <div class="mock-eyebrow-tag">— New Arrivals</div>
+            <div class="mock-h1">Products that<br><em>actually work.</em></div>
+            <div class="mock-sub-text">Everyday solutions, thoughtfully made.<br>Free shipping on orders over $50.</div>
+            <div class="mock-btn-row">
+              <div class="mock-btn">Shop Now →</div>
+              <div class="mock-btn-outline">Learn More</div>
+            </div>
+          </div>
+          <div class="mock-hero-right">
+            <div class="mock-product-card">
+              <div class="mock-ptag">Best Seller</div>
+              <div class="mock-pname">Signature Collection Set</div>
+              <div class="mock-pmeta">
+                <span class="mock-price">$48.00</span>
+                <span class="mock-stars">★ 4.9</span>
+              </div>
+            </div>
+            <div class="mock-product-card">
+              <div class="mock-ptag" style="color:var(--gold);background:rgba(200,168,75,0.12);">Limited</div>
+              <div class="mock-pname">Premium Bundle</div>
+              <div class="mock-pmeta">
+                <span class="mock-price">$89.00</span>
+                <span class="mock-stars">★ 4.8</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-products-section">
+          <div class="mock-section-label">Our Products</div>
+          <div class="mock-section-h">Shop <em>Everything</em></div>
+          <div class="mock-grid">
+            <div class="mock-card">
+              <div class="mock-card-img">🧴</div>
+              <div class="mock-card-body">
+                <div class="mock-card-name">Daily Serum</div>
+                <div class="mock-card-price">$34.00</div>
+                <div class="mock-add-btn">Add to Cart</div>
+              </div>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-img">🕯️</div>
+              <div class="mock-card-body">
+                <div class="mock-card-name">Amber Candle</div>
+                <div class="mock-card-price">$28.00</div>
+                <div class="mock-add-btn">Add to Cart</div>
+              </div>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-img">🎁</div>
+              <div class="mock-card-body">
+                <div class="mock-card-name">Gift Set</div>
+                <div class="mock-card-price">$62.00</div>
+                <div class="mock-add-btn">Add to Cart</div>
+              </div>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-img">✨</div>
+              <div class="mock-card-body">
+                <div class="mock-card-name">Glow Kit</div>
+                <div class="mock-card-price">$44.00</div>
+                <div class="mock-add-btn">Add to Cart</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile mock -->
+  <div id="format-mobile" style="display:none;" class="reveal">
+    <div class="mock-mobile">
+      <div class="mock-announce">Free shipping over $50</div>
+      <div class="mock-mobile-bar">
+        <div class="mock-hamburger">☰</div>
+        <div class="mock-logo" style="font-size:14px;">Dark<span>lit</span></div>
+        <div style="font-size:14px;color:var(--ink);">🛒</div>
+      </div>
+      <div class="mock-mobile-hero">
+        <div class="mock-eyebrow-tag" style="margin-bottom:8px;">— New Season</div>
+        <div class="mock-h1" style="font-size:22px;margin-bottom:8px;">Products that<br><em>actually work.</em></div>
+        <div class="mock-sub-text" style="margin-bottom:12px;">Thoughtfully made. Free shipping over $50.</div>
+        <div class="mock-btn">Shop Now →</div>
+      </div>
+      <div class="mock-mobile-products">
+        <div class="mock-section-label">Featured</div>
+        <div class="mock-section-h" style="font-size:14px;margin-bottom:12px;"><em>Top Picks</em></div>
+        <div class="mock-mobile-grid">
+          <div class="mock-card">
+            <div class="mock-card-img">🧴</div>
+            <div class="mock-card-body">
+              <div class="mock-card-name">Daily Serum</div>
+              <div class="mock-card-price">$34.00</div>
+              <div class="mock-add-btn">Add</div>
+            </div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-card-img">🕯️</div>
+            <div class="mock-card-body">
+              <div class="mock-card-name">Amber Candle</div>
+              <div class="mock-card-price">$28.00</div>
+              <div class="mock-add-btn">Add</div>
+            </div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-card-img">🎁</div>
+            <div class="mock-card-body">
+              <div class="mock-card-name">Gift Set</div>
+              <div class="mock-card-price">$62.00</div>
+              <div class="mock-add-btn">Add</div>
+            </div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-card-img">✨</div>
+            <div class="mock-card-body">
+              <div class="mock-card-name">Glow Kit</div>
+              <div class="mock-card-price">$44.00</div>
+              <div class="mock-add-btn">Add</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+  <div class="section-header reveal">
+    <div class="sec-eyebrow">Why Darklit</div>
+    <h2 class="sec-h2">Not another dark mode toggle.</h2>
+    <p class="sec-sub">Most implementations slap a class on the body and call it done. Darklit is a system — built from first principles for real storefronts.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Zero Flash on Load</div>
+      <div class="feature-desc">The detection script runs before the browser paints a single pixel. No white flash, no theme flicker — ever. This is the hard problem everyone else ignores.</div>
+      <span class="feature-tag">Position-0 Script</span>
+    </div>
+    <div class="feature-card reveal reveal-delay-1">
+      <div class="feature-icon">🕐</div>
+      <div class="feature-title">Timezone-Aware Detection</div>
+      <div class="feature-desc">Reads the visitor's actual local time. Dark mode from 7pm–6am automatically, before they've touched anything. No relying on OS settings that may be stale.</div>
+      <span class="feature-tag">Smart Detection</span>
+    </div>
+    <div class="feature-card reveal reveal-delay-2">
+      <div class="feature-icon">🎨</div>
+      <div class="feature-title">9 Complete Palettes</div>
+      <div class="feature-desc">Each palette covers a specific market niche — luxury, organic, tech, beauty, craft. Every color decision has been made. Change one attribute to rebrand entirely.</div>
+      <span class="feature-tag">360 Design Decisions</span>
+    </div>
+    <div class="feature-card reveal reveal-delay-3">
+      <div class="feature-icon">📱</div>
+      <div class="feature-title">Three Deploy Formats</div>
+      <div class="feature-desc">Mobile web with drawer nav. Desktop with accent word picker. App WebView with native postMessage bridge, safe area insets, and 44px touch targets.</div>
+      <span class="feature-tag">Mobile · Desktop · App</span>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🔧</div>
+      <div class="feature-title">Pure CSS Architecture</div>
+      <div class="feature-desc">20 CSS custom properties per palette. No JS re-coloring. No inline style overrides. The browser's cascade does all the work — zero runtime cost.</div>
+      <span class="feature-tag">Zero Runtime Cost</span>
+    </div>
+    <div class="feature-card reveal reveal-delay-1">
+      <div class="feature-icon">🏗️</div>
+      <div class="feature-title">Drop-In Ready</div>
+      <div class="feature-desc">Copy four files. Follow five steps. Works with any stack — Shopify, custom HTML, React, Vue. The engine doesn't care what's around it.</div>
+      <span class="feature-tag">Any Stack</span>
+    </div>
+  </div>
+</section>
+
+<!-- DETECTION EXPLAINER -->
+<section class="detection-section">
+  <div class="section-header reveal">
+    <div class="sec-eyebrow">The Engine</div>
+    <h2 class="sec-h2">Three-priority detection. <em>Built right.</em></h2>
+    <p class="sec-sub">This is what makes Darklit different from every dark mode tutorial you've ever read.</p>
+  </div>
+  <div class="detection-steps reveal">
+    <div class="detection-step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <strong>localStorage</strong>
+        User's saved preference from a previous visit. Respected first, always.
+      </div>
+    </div>
+    <div class="detection-step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <strong>Timezone → Local Hour</strong>
+        Reads actual device time. Auto-dark from 7pm–6am. No OS setting required.
+      </div>
+    </div>
+    <div class="detection-step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <strong>prefers-color-scheme</strong>
+        OS-level setting as a final fallback. Catches everything else.
+      </div>
+    </div>
+  </div>
+  <div class="detection-code reveal">
+    <span class="code-comment">/* Priority 1: User's saved preference */</span><br>
+    <span class="code-keyword">var</span> saved = localStorage.getItem(<span class="code-string">'df-theme'</span>);<br>
+    <span class="code-keyword">if</span> (saved) { root.setAttribute(<span class="code-string">'data-theme'</span>, saved); <span class="code-keyword">return</span>; }<br><br>
+    <span class="code-comment">/* Priority 2: Detect local hour via device timezone */</span><br>
+    <span class="code-keyword">var</span> tz = Intl.DateTimeFormat().resolvedOptions().timeZone;<br>
+    <span class="code-keyword">var</span> hour = parseInt(new Date().toLocaleString(<span class="code-string">'en-US'</span>, { hour: <span class="code-string">'numeric'</span>, timeZone: tz }));<br>
+    root.setAttribute(<span class="code-string">'data-theme'</span>, (hour >= <span class="code-string">19</span> || hour < <span class="code-string">6</span>) ? <span class="code-string">'dark'</span> : <span class="code-string">'light'</span>);<br><br>
+    <span class="code-comment">/* Priority 3: OS preference as fallback */</span><br>
+    root.setAttribute(<span class="code-string">'data-theme'</span>,<br>
+    &nbsp;&nbsp;window.matchMedia(<span class="code-string">'(prefers-color-scheme: dark)'</span>).matches ? <span class="code-string">'dark'</span> : <span class="code-string">'light'</span>);
+  </div>
+</section>
+
+<!-- WHAT'S INCLUDED -->
+<section class="included-section">
+  <div class="section-header reveal">
+    <div class="sec-eyebrow">What You Get</div>
+    <h2 class="sec-h2">Four files. <em>Complete system.</em></h2>
+    <p class="sec-sub">Everything you need to drop a professional, fully-themed storefront into any project.</p>
+  </div>
+  <div class="included-grid">
+    <div class="included-card reveal">
+      <div class="included-card-title">Engine Core</div>
+      <div class="included-card-sub">MoneyCode_Engine_v1.html</div>
+      <ul class="included-list">
+        <li>Position-0 early detection script</li>
+        <li>9-palette CSS variable architecture</li>
+        <li>Night light filter (eye strain)</li>
+        <li>Theme engine JavaScript</li>
+        <li>Full integration documentation</li>
+      </ul>
+    </div>
+    <div class="included-card reveal reveal-delay-1">
+      <div class="included-card-title">Mobile Web Storefront</div>
+      <div class="included-card-sub">Mobile_9Palettes_v4.html</div>
+      <ul class="included-list">
+        <li>Drawer navigation</li>
+        <li>Touch-optimized hero layout</li>
+        <li>Full cart with quantity controls</li>
+        <li>Sticky add-to-cart bar</li>
+        <li>Mobile dark mode toggle</li>
+      </ul>
+    </div>
+    <div class="included-card reveal reveal-delay-2">
+      <div class="included-card-title">Desktop Web Storefront</div>
+      <div class="included-card-sub">Desktop_9Palettes_v1_2.html</div>
+      <ul class="included-list">
+        <li>Full nav with links</li>
+        <li>Accent word picker</li>
+        <li>Split-panel hero</li>
+        <li>Product grid layout</li>
+        <li>Desktop palette switcher</li>
+      </ul>
+    </div>
+    <div class="included-card reveal reveal-delay-3">
+      <div class="included-card-title">App WebView Storefront</div>
+      <div class="included-card-sub">App_9Palettes_v4.html</div>
+      <ul class="included-list">
+        <li>URL param theme bridge</li>
+        <li>postMessage native handoff</li>
+        <li>44px touch targets (Apple HIG)</li>
+        <li>Safe area insets (notch/home bar)</li>
+        <li>Locked font scaling</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="section-header reveal">
+    <div class="sec-eyebrow">Pricing</div>
+    <h2 class="sec-h2">One price. <em>Everything included.</em></h2>
+    <p class="sec-sub" style="margin: 0 auto;">No subscriptions. No upsells. Pay once, use it on every project you build.</p>
+  </div>
+  <div class="price-card reveal">
+    <div class="price-badge">Complete Engine Bundle</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:16px;transition:color 0.4s ease;">One-time payment</div>
+    <div class="price-main"><sup>$</sup>49</div>
+    <div class="price-sub">Pay once. Use forever. No license fees per project.</div>
+    <ul class="price-list">
+      <li>Engine Core file + full documentation</li>
+      <li>Mobile Web storefront (v4)</li>
+      <li>Desktop Web storefront (v1.2)</li>
+      <li>App WebView storefront (v4)</li>
+      <li>9 palettes × 2 modes = 18 theme variants</li>
+      <li>Free updates when new palettes ship</li>
+      <li>Use on unlimited client projects</li>
+    </ul>
+    <button class="btn-cta">Get the Darklit Engine — $49 →</button>
+    <div class="price-note">Instant download · HTML files · Works with any stack</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-logo">Dark<span>lit</span></div>
+  <div class="footer-copy">© 2026 Darklit. All rights reserved.</div>
+</footer>
+
+<script>
+var root = document.documentElement;
+
+function toggleTheme() {
+  var current = root.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem('df-theme', next);
+  document.getElementById('themeIcon').textContent = next === 'dark' ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = next === 'dark' ? 'Dark mode' : 'Light mode';
+}
+
+function setPalette(color, el) {
+  root.setAttribute('data-color', color);
+  document.querySelectorAll('.palette-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function showFormat(format, el) {
+  document.getElementById('format-desktop').style.display = format === 'desktop' ? 'block' : 'none';
+  document.getElementById('format-mobile').style.display = format === 'mobile' ? 'block' : 'none';
+  document.querySelectorAll('.format-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Sync theme label on load
+(function() {
+  var theme = root.getAttribute('data-theme');
+  document.getElementById('themeIcon').textContent = theme === 'dark' ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = theme === 'dark' ? 'Dark mode' : 'Light mode';
+})();
+
+// Reveal animations
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.07, rootMargin: '0px 0px -20px 0px' });
+reveals.forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
