@@ -620,7 +620,7 @@ body {
   line-height: 1.15;
   transition: color 0.4s ease;
 }
-[data-theme="dark"] .mock-h1 { color: var(--ink); }
+[data-theme="dark"] .mock-hero-left .mock-h1 { color: var(--ink); }
 .mock-h1 em { font-style: italic; color: var(--gold); transition: color 0.4s ease; }
 .mock-sub-text {
   font-size: 11px;
@@ -628,7 +628,11 @@ body {
   line-height: 1.5;
   transition: color 0.4s ease;
 }
-[data-theme="dark"] .mock-sub-text { color: var(--muted); }
+[data-theme="dark"] .mock-hero-left .mock-sub-text { color: var(--muted); }
+.mock-eyebrow-tag { transition: color 0.4s ease; }
+[data-theme="dark"] .mock-hero-left .mock-eyebrow-tag { color: var(--accent-mid); }
+.mock-btn-outline { transition: all 0.4s ease; }
+[data-theme="dark"] .mock-hero-left .mock-btn-outline { color: var(--muted); border-color: var(--border2); }
 .mock-btn-row { display: flex; gap: 8px; margin-top: 4px; }
 .mock-btn {
   background: var(--accent);
@@ -791,6 +795,7 @@ body {
   transition: background 0.4s ease, border-color 0.4s ease;
 }
 .mock-hamburger { font-size: 16px; color: var(--ink); cursor: pointer; transition: color 0.4s ease; }
+[data-theme="dark"] .mock-hero-left { background: var(--bg3) !important; }
 .mock-mobile-hero {
   background: var(--ink);
   padding: 28px 20px;
