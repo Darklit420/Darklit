@@ -56,15 +56,15 @@
 [data-color="plum"][data-theme="light"] .mock-hero-left,[data-color="rose"][data-theme="light"] .mock-hero-left,[data-color="sage"][data-theme="light"] .mock-hero-left,[data-color="midnight"][data-theme="light"] .mock-hero-left,[data-color="ember"][data-theme="light"] .mock-hero-left,[data-color="slate"][data-theme="light"] .mock-hero-left,[data-color="obsidian"][data-theme="light"] .mock-hero-left,[data-color="copper"][data-theme="light"] .mock-hero-left,[data-color="iris"][data-theme="light"] .mock-hero-left{background:var(--ink)!important;}
 
 /* PER-PALETTE TINTED WHY/FOOTER */
-[data-color="plum"][data-theme="dark"] .mock-why,[data-color="plum"][data-theme="dark"] .mock-footer{background:#0c0418;}
-[data-color="rose"][data-theme="dark"] .mock-why,[data-color="rose"][data-theme="dark"] .mock-footer{background:#140408;}
-[data-color="sage"][data-theme="dark"] .mock-why,[data-color="sage"][data-theme="dark"] .mock-footer{background:#031b0d;}
-[data-color="midnight"][data-theme="dark"] .mock-why,[data-color="midnight"][data-theme="dark"] .mock-footer{background:#030610;}
-[data-color="ember"][data-theme="dark"] .mock-why,[data-color="ember"][data-theme="dark"] .mock-footer{background:#0c0600;}
-[data-color="slate"][data-theme="dark"] .mock-why,[data-color="slate"][data-theme="dark"] .mock-footer{background:#040a0c;}
-[data-color="obsidian"][data-theme="dark"] .mock-why,[data-color="obsidian"][data-theme="dark"] .mock-footer{background:#040200;}
-[data-color="copper"][data-theme="dark"] .mock-why,[data-color="copper"][data-theme="dark"] .mock-footer{background:#0e0402;}
-[data-color="iris"][data-theme="dark"] .mock-why,[data-color="iris"][data-theme="dark"] .mock-footer{background:#060210;}
+[data-color="plum"][data-theme="dark"] .mock-why,[data-color="plum"][data-theme="dark"] .mock-footer,[data-color="plum"][data-theme="dark"] .mock-cta{background:#0c0418;}
+[data-color="rose"][data-theme="dark"] .mock-why,[data-color="rose"][data-theme="dark"] .mock-footer,[data-color="rose"][data-theme="dark"] .mock-cta{background:#140408;}
+[data-color="sage"][data-theme="dark"] .mock-why,[data-color="sage"][data-theme="dark"] .mock-footer,[data-color="sage"][data-theme="dark"] .mock-cta{background:#031b0d;}
+[data-color="midnight"][data-theme="dark"] .mock-why,[data-color="midnight"][data-theme="dark"] .mock-footer,[data-color="midnight"][data-theme="dark"] .mock-cta{background:#030610;}
+[data-color="ember"][data-theme="dark"] .mock-why,[data-color="ember"][data-theme="dark"] .mock-footer,[data-color="ember"][data-theme="dark"] .mock-cta{background:#0c0600;}
+[data-color="slate"][data-theme="dark"] .mock-why,[data-color="slate"][data-theme="dark"] .mock-footer,[data-color="slate"][data-theme="dark"] .mock-cta{background:#040a0c;}
+[data-color="obsidian"][data-theme="dark"] .mock-why,[data-color="obsidian"][data-theme="dark"] .mock-footer,[data-color="obsidian"][data-theme="dark"] .mock-cta{background:#040200;}
+[data-color="copper"][data-theme="dark"] .mock-why,[data-color="copper"][data-theme="dark"] .mock-footer,[data-color="copper"][data-theme="dark"] .mock-cta{background:#0e0402;}
+[data-color="iris"][data-theme="dark"] .mock-why,[data-color="iris"][data-theme="dark"] .mock-footer,[data-color="iris"][data-theme="dark"] .mock-cta{background:#060210;}
 
 /* NIGHT LIGHT FILTER */
 html[data-theme="dark"] body::before{content:'';position:fixed;inset:0;background:rgba(255,149,0,0.04);pointer-events:none;z-index:9999;mix-blend-mode:multiply;}
@@ -157,7 +157,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);tran
 [data-theme="dark"] .mock-hero-left .mock-sub-text{color:var(--muted);}
 .mock-trust-row{display:flex;flex-direction:column;gap:3px;margin-top:2px;}
 .mock-trust-item{font-size:9px;color:rgba(247,245,240,0.4);display:flex;align-items:center;gap:4px;}
-[data-theme="dark"] .mock-hero-left .mock-trust-item{color:var(--muted2);}
+[data-theme="dark"] .mock-hero-left .mock-trust-item{color:var(--muted);}
 .mock-trust-item::before{content:'✓';color:var(--accent-mid);font-weight:700;font-size:8px;}
 .mock-btn-row{display:flex;gap:6px;margin-top:4px;}
 .mock-btn{background:var(--accent);color:#fff;padding:6px 12px;border-radius:50px;font-size:9px;font-weight:600;transition:background 0.4s ease;}
@@ -226,7 +226,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);tran
 .mock-faq-a{font-size:8px;color:var(--muted);line-height:1.4;transition:color 0.4s ease;}
 
 /* MOCK CTA BANNER */
-.mock-cta{background:var(--accent);padding:20px;text-align:center;transition:background 0.4s ease;}
+.mock-cta{background:var(--ink);padding:20px;text-align:center;transition:background 0.4s ease;}
 .mock-cta-h{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;}
 .mock-cta-sub{font-size:9px;color:rgba(255,255,255,0.7);margin-bottom:10px;}
 .mock-cta-btn{background:#fff;color:var(--accent);padding:6px 16px;border-radius:50px;font-size:9px;font-weight:700;display:inline-block;transition:color 0.4s ease;}
